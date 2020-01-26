@@ -1,0 +1,398 @@
+services:
+  cloudflareddns:
+    container_name: cloudflareddns
+    environment:
+    - ARGS=${CLOUDFLAREDDNS_ARGS}
+    - CF_APIKEY=${CLOUDFLAREDDNS_APIKEY}
+    - CF_HOSTS=${CLOUDFLAREDDNS_HOSTS}
+    - CF_RECORDTYPES=${CLOUDFLAREDDNS_RECORDTYPES}
+    - CF_USER=${CLOUDFLAREDDNS_USER}
+    - CF_ZONES=${CLOUDFLAREDDNS_ZONES}
+    - DETECTION_MODE=${CLOUDFLAREDDNS_DETECTION_MODE}
+    - INTERVAL=${CLOUDFLAREDDNS_INTERVAL}
+    - LOG_LEVEL=${CLOUDFLAREDDNS_LOG_LEVEL}
+    - PGID=${PGID}
+    - PUID=${PUID}
+    - TZ=${TZ}
+    hostname: ${DOCKERHOSTNAME}
+    image: hotio/cloudflare-ddns
+    logging:
+      driver: json-file
+      options:
+        max-file: ${DOCKERLOGGING_MAXFILE}
+        max-size: ${DOCKERLOGGING_MAXSIZE}
+    restart: unless-stopped
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - ${DOCKERSHAREDDIR}:/shared
+  delugevpn:
+    cap_add:
+    - NET_ADMIN
+    container_name: delugevpn
+    environment:
+    - ENABLE_PRIVOXY=${DELUGEVPN_ENABLE_PRIVOXY}
+    - LAN_NETWORK=${LAN_NETWORK}
+    - NAME_SERVERS=${NS1},${NS2}
+    - PGID=${PGID}
+    - PUID=${PUID}
+    - TZ=${TZ}
+    - VPN_ENABLED=${VPN_ENABLE}
+    - VPN_OPTIONS=${VPN_OPTIONS}
+    - VPN_PASS=${VPN_PASS}
+    - VPN_PROV=${VPN_PROV}
+    - VPN_USER=${VPN_USER}
+    hostname: ${DOCKERHOSTNAME}
+    image: binhex/arch-delugevpn
+    logging:
+      driver: json-file
+      options:
+        max-file: ${DOCKERLOGGING_MAXFILE}
+        max-size: ${DOCKERLOGGING_MAXSIZE}
+    ports:
+    - ${DELUGEVPN_PORT_51413}:51413
+    - ${DELUGEVPN_PORT_51413}:51413/udp
+    - ${DELUGEVPN_PORT_58846}:58846
+    - ${DELUGEVPN_PORT_58946}:58946
+    - ${DELUGEVPN_PORT_6881}:6881
+    - ${DELUGEVPN_PORT_6881}:6881/udp
+    - ${DELUGEVPN_PORT_8112}:8112
+    - ${DELUGEVPN_PORT_8118}:8118
+    restart: unless-stopped
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - ${DOCKERCONFDIR}/delugevpn:/config
+    - ${DOCKERSHAREDDIR}:/shared
+    - ${DOWNLOADSDIR}:/data
+    - ${DOWNLOADSDIR}:/downloads
+    - ${VPN_OVPNDIR}:/config/openvpn
+  homeassistant:
+    container_name: homeassistant
+    environment:
+    - TZ=${TZ}
+    image: homeassistant/home-assistant
+    logging:
+      driver: json-file
+      options:
+        max-file: ${DOCKERLOGGING_MAXFILE}
+        max-size: ${DOCKERLOGGING_MAXSIZE}
+    network_mode: ${HOMEASSISTANT_NETWORK_MODE}
+    restart: unless-stopped
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - ${DOCKERCONFDIR}/homeassistant:/config
+    - ${DOCKERSHAREDDIR}:/shared
+  jackett:
+    container_name: jackett
+    environment:
+    - PGID=${PGID}
+    - PUID=${PUID}
+    - TZ=${TZ}
+    hostname: ${DOCKERHOSTNAME}
+    image: linuxserver/jackett
+    logging:
+      driver: json-file
+      options:
+        max-file: ${DOCKERLOGGING_MAXFILE}
+        max-size: ${DOCKERLOGGING_MAXSIZE}
+    ports:
+    - ${JACKETT_PORT_9117}:9117
+    restart: unless-stopped
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - ${DOCKERCONFDIR}/jackett:/config
+    - ${DOCKERSHAREDDIR}:/shared
+    - ${DOWNLOADSDIR}:/data
+    - ${DOWNLOADSDIR}:/downloads
+  jellyfin:
+    container_name: jellyfin
+    environment:
+    - PGID=${PGID}
+    - PUID=${PUID}
+    - TZ=${TZ}
+    hostname: ${DOCKERHOSTNAME}
+    image: linuxserver/jellyfin
+    logging:
+      driver: json-file
+      options:
+        max-file: ${DOCKERLOGGING_MAXFILE}
+        max-size: ${DOCKERLOGGING_MAXSIZE}
+    ports:
+    - ${JELLYFIN_PORT_8096}:8096
+    - ${JELLYFIN_PORT_8920}:8920
+    restart: unless-stopped
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - ${DOCKERCONFDIR}/jellyfin:/config
+    - ${DOCKERSHAREDDIR}:/shared
+    - ${JELLYFIN_TRANSCODEDIR}:/transcode
+    - ${MEDIADIR_MOVIES}:/data/movies
+    - ${MEDIADIR_MOVIES}:/movies
+    - ${MEDIADIR_MUSIC}:/data/music
+    - ${MEDIADIR_MUSIC}:/music
+    - ${MEDIADIR_TV}:/data/tvshows
+    - ${MEDIADIR_TV}:/tv
+  letsencrypt:
+    cap_add:
+    - NET_ADMIN
+    container_name: letsencrypt
+    environment:
+    - DNSPLUGIN=${LETSENCRYPT_DNSPLUGIN}
+    - DUCKDNSTOKEN=${LETSENCRYPT_DUCKDNSTOKEN}
+    - EMAIL=${LETSENCRYPT_EMAIL}
+    - EXTRA_DOMAINS=${LETSENCRYPT_EXTRA_DOMAINS}
+    - ONLY_SUBDOMAINS=${LETSENCRYPT_ONLY_SUBDOMAINS}
+    - PGID=${PGID}
+    - PUID=${PUID}
+    - SUBDOMAINS=${LETSENCRYPT_SUBDOMAINS}
+    - TZ=${TZ}
+    - URL=${LETSENCRYPT_URL}
+    - VALIDATION=${LETSENCRYPT_VALIDATION}
+    hostname: ${DOCKERHOSTNAME}
+    image: linuxserver/letsencrypt
+    logging:
+      driver: json-file
+      options:
+        max-file: ${DOCKERLOGGING_MAXFILE}
+        max-size: ${DOCKERLOGGING_MAXSIZE}
+    ports:
+    - ${LETSENCRYPT_PORT_443}:443
+    - ${LETSENCRYPT_PORT_80}:80
+    restart: unless-stopped
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - ${DOCKERCONFDIR}/letsencrypt:/config
+    - ${DOCKERSHAREDDIR}:/shared
+  mariadb:
+    container_name: mariadb
+    environment:
+    - MYSQL_ROOT_PASSWORD=${MARIADB_MYSQL_ROOT_PASSWORD}
+    - PGID=${PGID}
+    - PUID=${PUID}
+    - TZ=${TZ}
+    hostname: ${DOCKERHOSTNAME}
+    image: linuxserver/mariadb
+    logging:
+      driver: json-file
+      options:
+        max-file: ${DOCKERLOGGING_MAXFILE}
+        max-size: ${DOCKERLOGGING_MAXSIZE}
+    ports:
+    - ${MARIADB_PORT_3306}:3306
+    restart: unless-stopped
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - ${DOCKERCONFDIR}/mariadb:/config
+    - ${DOCKERSHAREDDIR}:/shared
+  nextcloud:
+    container_name: nextcloud
+    environment:
+    - PGID=${PGID}
+    - PUID=${PUID}
+    - TZ=${TZ}
+    hostname: ${DOCKERHOSTNAME}
+    image: linuxserver/nextcloud
+    logging:
+      driver: json-file
+      options:
+        max-file: ${DOCKERLOGGING_MAXFILE}
+        max-size: ${DOCKERLOGGING_MAXSIZE}
+    ports:
+    - ${NEXTCLOUD_PORT_443}:443
+    restart: unless-stopped
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - ${DOCKERCONFDIR}/nextcloud:/config
+    - ${DOCKERSHAREDDIR}:/shared
+    - ${NEXTCLOUD_DATADIR}:/data
+  openvpnas:
+    cap_add:
+    - NET_ADMIN
+    container_name: openvpnas
+    environment:
+    - INTERFACE=${OPENVPNAS_INTERFACE}
+    - PGID=${PGID}
+    - PUID=${PUID}
+    - TZ=${TZ}
+    hostname: ${DOCKERHOSTNAME}
+    image: linuxserver/openvpn-as
+    logging:
+      driver: json-file
+      options:
+        max-file: ${DOCKERLOGGING_MAXFILE}
+        max-size: ${DOCKERLOGGING_MAXSIZE}
+    ports:
+    - ${OPENVPNAS_PORT_1194}:1194/udp
+    - ${OPENVPNAS_PORT_943}:943
+    - ${OPENVPNAS_PORT_9443}:9443
+    restart: unless-stopped
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - ${DOCKERCONFDIR}/openvpnas:/config
+    - ${DOCKERSHAREDDIR}:/shared
+  ouroboros:
+    container_name: ouroboros
+    environment:
+    - CLEANUP=${OUROBOROS_CLEANUP}
+    - CRON=${OUROBOROS_CRON}
+    - IGNORE=${OUROBOROS_IGNORE}
+    - INTERVAL=${OUROBOROS_INTERVAL}
+    - LOG_LEVEL=${OUROBOROS_LOG_LEVEL}
+    - MONITOR=${OUROBOROS_MONITOR}
+    - NOTIFIERS=${OUROBOROS_NOTIFIERS}
+    - REPO_PASS=${OUROBOROS_REPO_PASS}
+    - REPO_USER=${OUROBOROS_REPO_USER}
+    - SELF_UPDATE=${OUROBOROS_SELF_UPDATE}
+    - TZ=${TZ}
+    hostname: ${DOCKERHOSTNAME}
+    image: pyouroboros/ouroboros
+    logging:
+      driver: json-file
+      options:
+        max-file: ${DOCKERLOGGING_MAXFILE}
+        max-size: ${DOCKERLOGGING_MAXSIZE}
+    restart: unless-stopped
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - /var/run/docker.sock:/var/run/docker.sock
+    - ${DOCKERSHAREDDIR}:/shared
+  pihole:
+    cap_add:
+    - NET_ADMIN
+    container_name: pihole
+    dns:
+    - 127.0.0.1
+    - ${NS1}
+    - ${NS2}
+    environment:
+    - DNS1=${NS1}
+    - DNS2=${NS2}
+    - ServerIP=${PIHOLE_SERVERIP}
+    - ServerIPv6=${PIHOLE_SERVERIPV6}
+    - TZ=${TZ}
+    - WEBPASSWORD=${PIHOLE_WEBPASSWORD}
+    hostname: ${DOCKERHOSTNAME}
+    image: pihole/pihole
+    logging:
+      driver: json-file
+      options:
+        max-file: ${DOCKERLOGGING_MAXFILE}
+        max-size: ${DOCKERLOGGING_MAXSIZE}
+    ports:
+    - ${PIHOLE_PORT_443}:443
+    - ${PIHOLE_PORT_53}:53
+    - ${PIHOLE_PORT_53}:53/udp
+    - ${PIHOLE_PORT_67}:67/udp
+    - ${PIHOLE_PORT_80}:80
+    restart: unless-stopped
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - ${DOCKERCONFDIR}/pihole/dnsmasq.d:/etc/dnsmasq.d
+    - ${DOCKERCONFDIR}/pihole/pihole:/etc/pihole
+    - ${DOCKERSHAREDDIR}:/shared
+  portainer:
+    command: -H unix:///var/run/docker.sock
+    container_name: portainer
+    environment:
+    - TZ=${TZ}
+    hostname: ${DOCKERHOSTNAME}
+    image: portainer/portainer
+    logging:
+      driver: json-file
+      options:
+        max-file: ${DOCKERLOGGING_MAXFILE}
+        max-size: ${DOCKERLOGGING_MAXSIZE}
+    ports:
+    - ${PORTAINER_PORT_9000}:9000
+    restart: unless-stopped
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - /var/run/docker.sock:/var/run/docker.sock
+    - ${DOCKERCONFDIR}/portainer:/data
+    - ${DOCKERSHAREDDIR}:/shared
+  radarr:
+    container_name: radarr
+    environment:
+    - PGID=${PGID}
+    - PUID=${PUID}
+    - TZ=${TZ}
+    hostname: ${DOCKERHOSTNAME}
+    image: linuxserver/radarr
+    logging:
+      driver: json-file
+      options:
+        max-file: ${DOCKERLOGGING_MAXFILE}
+        max-size: ${DOCKERLOGGING_MAXSIZE}
+    ports:
+    - ${RADARR_PORT_7878}:7878
+    restart: unless-stopped
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - ${DOCKERCONFDIR}/radarr:/config
+    - ${DOCKERSHAREDDIR}:/shared
+    - ${DOWNLOADSDIR}:/data
+    - ${DOWNLOADSDIR}:/downloads
+    - ${MEDIADIR_MOVIES}:/movies
+  samba:
+    container_name: samba
+    environment:
+    - GROUPID=${PGID}
+    - NMBD=${SAMBA_NMBD}
+    - SHARE=${SAMBA_SHARENAME};/${SAMBA_SHARENAME};yes;no;no;all;${SAMBA_USERNAME}
+    - TZ=${TZ}
+    - USER=${SAMBA_USERNAME};${SAMBA_PASSWORD}
+    - USERID=${PUID}
+    - WORKGROUP=${SAMBA_WORKGROUP}
+    hostname: ${DOCKERHOSTNAME}
+    image: dperson/samba
+    logging:
+      driver: json-file
+      options:
+        max-file: ${DOCKERLOGGING_MAXFILE}
+        max-size: ${DOCKERLOGGING_MAXSIZE}
+    ports:
+    - ${SAMBA_PORT_137}:137/udp
+    - ${SAMBA_PORT_138}:138/udp
+    - ${SAMBA_PORT_139}:139
+    - ${SAMBA_PORT_445}:445
+    restart: unless-stopped
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - ${DOCKERCONFDIR}:/${SAMBA_SHARENAME}/config
+    - ${DOCKERSHAREDDIR}:/${SAMBA_SHARENAME}/shared
+    - ${DOCKERSHAREDDIR}:/shared
+    - ${DOWNLOADSDIR}:/${SAMBA_SHARENAME}/downloads
+    - ${DOWNLOADSDIR}:/downloads
+    - ${MEDIADIR_BOOKS}:/${SAMBA_SHARENAME}/books
+    - ${MEDIADIR_BOOKS}:/books
+    - ${MEDIADIR_COMICS}:/${SAMBA_SHARENAME}/comics
+    - ${MEDIADIR_COMICS}:/comics
+    - ${MEDIADIR_MOVIES}:/${SAMBA_SHARENAME}/movies
+    - ${MEDIADIR_MOVIES}:/movies
+    - ${MEDIADIR_MUSIC}:/${SAMBA_SHARENAME}/music
+    - ${MEDIADIR_MUSIC}:/music
+    - ${MEDIADIR_TV}:/${SAMBA_SHARENAME}/tv
+    - ${MEDIADIR_TV}:/tv
+  sonarr:
+    container_name: sonarr
+    environment:
+    - PGID=${PGID}
+    - PUID=${PUID}
+    - TZ=${TZ}
+    hostname: ${DOCKERHOSTNAME}
+    image: linuxserver/sonarr
+    logging:
+      driver: json-file
+      options:
+        max-file: ${DOCKERLOGGING_MAXFILE}
+        max-size: ${DOCKERLOGGING_MAXSIZE}
+    ports:
+    - ${SONARR_PORT_8989}:8989
+    restart: unless-stopped
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - ${DOCKERCONFDIR}/sonarr:/config
+    - ${DOCKERSHAREDDIR}:/shared
+    - ${DOWNLOADSDIR}:/data
+    - ${DOWNLOADSDIR}:/downloads
+    - ${MEDIADIR_TV}:/tv
+version: "3.4"

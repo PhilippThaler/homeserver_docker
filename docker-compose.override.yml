@@ -1,0 +1,87 @@
+version: '3.4'
+# Other docker-compose examples in /examples
+
+services:
+#  minecraft:
+#    container_name: minecraft
+#    image: itzg/minecraft-server
+#    ports:
+#      - "25565:25565"
+#    volumes:
+#      - "${DOCKERCONFDIR}/minecraft/data:/data"
+#    environment:
+#      EULA: "TRUE"
+#      ENABLE_RCON: "true"
+#      RCON_PASSWORD: "testing"
+#      RCON_PORT: 28016
+#      DIFFICULTY: "normal"
+#      SNOOPER_ENABLED: "false"
+#      GENERATE_STRUCTURES: "true"
+#      ALLOW_NETHER: "true"
+#      # enable env variable replacement
+#      REPLACE_ENV_VARIABLES: "TRUE"
+#      # define an optional prefix for your env variables you want to replace
+#      ENV_VARIABLE_PREFIX: "CFG_"
+#      # and here are the actual variables
+#      CFG_DB_HOST: "mariadb:3306"
+#      CFG_DB_NAME: "minecraft"
+#      CFG_DB_PASSWORD: ${CFG_DB_PASSWORD}
+#    restart: always
+#  rcon:
+#    container_name: rcon
+#    image: itzg/rcon
+#    ports:
+#      - "4326:4326"
+#      - "4327:4327"
+#    volumes:
+#      - "${DOCKERCONFDIR}/minecraft/rcon:/opt/rcon-web-admin/db"
+  postgres:
+    container_name: postgresql
+    image: postgres
+    ports:
+      - "5432:5432"
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - "${DOCKERCONFDIR}/postgres:/var/lib/postgresql/data"
+  deconz:
+    image: marthoc/deconz
+    container_name: deconz
+    network_mode: host
+    restart: always
+    volumes:
+      - ${DOCKERCONFDIR}/deCONZ:/root/.local/share/dresden-elektronik/deCONZ
+    devices:
+      - /dev/ttyACM0:/dev/ttyACM0
+    environment:
+      - DECONZ_WEB_PORT=801
+      - DECONZ_WS_PORT=445
+      - DECONZ_VNC_PORT=5930
+      - DECONZ_VNC_PASSWORD=${DECONZ_VNC_PASSWORD}
+      - DECONZ_VNC_MODE=1
+      - DEBUG_INFO=1
+      - TZ=Europe/Vienna
+  esphome:
+    image: esphome/esphome
+    container_name: esphome
+    volumes: 
+      - ${DOCKERCONFDIR}/esphome:/config:rw
+      - /etc/localtime:/etc/localtime:ro
+    network_mode: host
+    restart: always
+  node-red:
+    image: nodered/node-red
+    container_name: nodered
+    ports:
+      - 1880:1880
+    volumes: 
+      - ${DOCKERCONFDIR}/nodered:/data
+  homeassistant:
+    depends_on:
+      - "mariadb"
+  nextcloud:
+    depends_on:
+      - "mariadb"
+    

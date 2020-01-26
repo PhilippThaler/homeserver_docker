@@ -1,4 +1,4 @@
-.apps
-.reqs
-.env*
-README.md
+*
+
+!docker-compose.yml
+!docker-compose.override.yml

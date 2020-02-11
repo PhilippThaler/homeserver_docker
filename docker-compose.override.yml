@@ -92,6 +92,7 @@ services:
     ports:
       - 1880:1880
     volumes: 
+      - /etc/localtime:/etc/localtime:ro
       - ${DOCKERCONFDIR}/nodered:/data
   redis:
     image: bitnami/redis

@@ -1,11 +1,67 @@
 version: "3.4"
 services:
+  bazarr:
+    image: linuxserver/bazarr
+    hostname: ${DOCKERHOSTNAME}
+    ports:
+    - ${BAZARR_PORT_6767}:6767
+    container_name: bazarr
+    environment:
+    - PGID=${PGID}
+    - PUID=${PUID}
+    - TZ=${TZ}
+    logging:
+      driver: json-file
+      options:
+        max-file: ${DOCKERLOGGING_MAXFILE}
+        max-size: ${DOCKERLOGGING_MAXSIZE}
+    restart: unless-stopped
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - ${DOCKERCONFDIR}/bazarr:/config
+    - ${DOCKERSHAREDDIR}:/shared
+    - ${MEDIADIR_MOVIES}:/movies
+    - ${MEDIADIR_TV}:/tv
+  bitwarden:
+    image: bitwardenrs/server
+    hostname: ${DOCKERHOSTNAME}
+    ports:
+    - ${BITWARDEN_PORT_80}:80
+    container_name: bitwarden
+    environment:
+    - ADMIN_TOKEN=${BITWARDEN_ADMIN_TOKEN}
+    - DATABASE_URL=${BITWARDEN_DATABASE_URL}
+    - DISABLE_ADMIN_TOKEN=${BITWARDEN_DISABLE_ADMIN_TOKEN}
+    - DOMAIN=${BITWARDEN_DOMAIN}
+    - ENABLE_DB_WAL=${BITWARDEN_ENABLE_DB_WAL}
+    - INVITATIONS_ALLOWED=${BITWARDEN_INVITATIONS_ALLOWED}
+    - SHOW_PASSWORD_HINT=${BITWARDEN_SHOW_PASSWORD_HINT}
+    - SIGNUPS_ALLOWED=${BITWARDEN_SIGNUPS_ALLOWED}
+    - SIGNUPS_VERIFY=${BITWARDEN_SIGNUPS_VERIFY}
+    - SMTP_FROM=${BITWARDEN_SMTP_FROM}
+    - SMTP_HOST=${BITWARDEN_SMTP_HOST}
+    - SMTP_PASSWORD=${BITWARDEN_SMTP_PASSWORD}
+    - SMTP_PORT=${BITWARDEN_SMTP_PORT}
+    - SMTP_SSL=${BITWARDEN_SMTP_SSL}
+    - SMTP_USERNAME=${BITWARDEN_SMTP_USERNAME}
+    - TZ=${TZ}
+    logging:
+      driver: json-file
+      options:
+        max-file: ${DOCKERLOGGING_MAXFILE}
+        max-size: ${DOCKERLOGGING_MAXSIZE}
+    restart: unless-stopped
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - ${DOCKERCONFDIR}/bitwarden:/data
+    - ${DOCKERSHAREDDIR}:/shared
   cloudflareddns:
     image: hotio/cloudflare-ddns
     hostname: ${DOCKERHOSTNAME}
     container_name: cloudflareddns
     environment:
     - ARGS=${CLOUDFLAREDDNS_ARGS}
+    - CF_APITOKEN=${CLOUDFLAREDDNS_APITOKEN}
     - CF_APIKEY=${CLOUDFLAREDDNS_APIKEY}
     - CF_HOSTS=${CLOUDFLAREDDNS_HOSTS}
     - CF_RECORDTYPES=${CLOUDFLAREDDNS_RECORDTYPES}
@@ -26,33 +82,37 @@ services:
     volumes:
     - /etc/localtime:/etc/localtime:ro
     - ${DOCKERSHAREDDIR}:/shared
-  delugevpn:
-    image: binhex/arch-delugevpn
+  grafana:
+    image: grafana/grafana
     hostname: ${DOCKERHOSTNAME}
     ports:
-    - ${DELUGEVPN_PORT_51413}:51413
-    - ${DELUGEVPN_PORT_51413}:51413/udp
-    - ${DELUGEVPN_PORT_58846}:58846
-    - ${DELUGEVPN_PORT_58946}:58946
-    - ${DELUGEVPN_PORT_6881}:6881
-    - ${DELUGEVPN_PORT_6881}:6881/udp
-    - ${DELUGEVPN_PORT_8112}:8112
-    - ${DELUGEVPN_PORT_8118}:8118
-    cap_add:
-    - NET_ADMIN
-    container_name: delugevpn
+    - ${GRAFANA_PORT_3000}:3000
+    container_name: grafana
     environment:
-    - ENABLE_PRIVOXY=${DELUGEVPN_ENABLE_PRIVOXY}
-    - LAN_NETWORK=${LAN_NETWORK}
-    - NAME_SERVERS=${NS1},${NS2}
+    - GF_INSTALL_PLUGINS=${GRAFANA_GF_INSTALL_PLUGINS}
+    - TZ=${TZ}
+    logging:
+      driver: json-file
+      options:
+        max-file: ${DOCKERLOGGING_MAXFILE}
+        max-size: ${DOCKERLOGGING_MAXSIZE}
+    restart: unless-stopped
+    user: ${PUID}:${PGID}
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - ${DOCKERCONFDIR}/grafana:/var/lib/grafana
+    - ${DOCKERSHAREDDIR}:/shared
+  heimdall:
+    image: linuxserver/heimdall
+    hostname: ${DOCKERHOSTNAME}
+    ports:
+    - ${HEIMDALL_PORT_443}:443
+    - ${HEIMDALL_PORT_80}:80
+    container_name: heimdall
+    environment:
     - PGID=${PGID}
     - PUID=${PUID}
     - TZ=${TZ}
-    - VPN_ENABLED=${VPN_ENABLE}
-    - VPN_OPTIONS=${VPN_OPTIONS}
-    - VPN_PASS=${VPN_PASS}
-    - VPN_PROV=${VPN_PROV}
-    - VPN_USER=${VPN_USER}
     logging:
       driver: json-file
       options:
@@ -61,11 +121,8 @@ services:
     restart: unless-stopped
     volumes:
     - /etc/localtime:/etc/localtime:ro
-    - ${DOCKERCONFDIR}/delugevpn:/config
+    - ${DOCKERCONFDIR}/heimdall:/config
     - ${DOCKERSHAREDDIR}:/shared
-    - ${DOWNLOADSDIR}:/data
-    - ${DOWNLOADSDIR}:/downloads
-    - ${VPN_OVPNDIR}:/config/openvpn
   homeassistant:
     image: homeassistant/home-assistant
     network_mode: ${HOMEASSISTANT_NETWORK_MODE}
@@ -81,6 +138,24 @@ services:
     volumes:
     - /etc/localtime:/etc/localtime:ro
     - ${DOCKERCONFDIR}/homeassistant:/config
+    - ${DOCKERSHAREDDIR}:/shared
+  influxdb:
+    image: influxdb
+    hostname: ${DOCKERHOSTNAME}
+    ports:
+    - ${INFLUXDB_PORT_8086}:8086
+    container_name: influxdb
+    environment:
+    - TZ=${TZ}
+    logging:
+      driver: json-file
+      options:
+        max-file: ${DOCKERLOGGING_MAXFILE}
+        max-size: ${DOCKERLOGGING_MAXSIZE}
+    restart: unless-stopped
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - ${DOCKERCONFDIR}/influxdb:/var/lib/influxdb
     - ${DOCKERSHAREDDIR}:/shared
   jackett:
     image: linuxserver/jackett
@@ -261,10 +336,10 @@ services:
     hostname: ${DOCKERHOSTNAME}
     ports:
     - ${PIHOLE_PORT_443}:443
-    - ${PIHOLE_PORT_53}:53
-    - ${PIHOLE_PORT_53}:53/udp
-    - ${PIHOLE_PORT_67}:67/udp
     - ${PIHOLE_PORT_80}:80
+    - ${PIHOLE_SERVERIP}:${PIHOLE_PORT_53}:53
+    - ${PIHOLE_SERVERIP}:${PIHOLE_PORT_53}:53/udp
+    - ${PIHOLE_SERVERIP}:${PIHOLE_PORT_67}:67/udp
     cap_add:
     - NET_ADMIN
     container_name: pihole
@@ -276,7 +351,6 @@ services:
     - DNS1=${NS1}
     - DNS2=${NS2}
     - ServerIP=${PIHOLE_SERVERIP}
-    - ServerIPv6=${PIHOLE_SERVERIPV6}
     - TZ=${TZ}
     - WEBPASSWORD=${PIHOLE_WEBPASSWORD}
     logging:
@@ -333,6 +407,56 @@ services:
     - ${DOWNLOADSDIR}:/data
     - ${DOWNLOADSDIR}:/downloads
     - ${MEDIADIR_MOVIES}:/movies
+  rtorrentvpn:
+    image: binhex/arch-rtorrentvpn
+    hostname: ${DOCKERHOSTNAME}
+    ports:
+    - ${RTORRENTVPN_PORT_3000}:3000
+    - ${RTORRENTVPN_PORT_51413}:51413
+    - ${RTORRENTVPN_PORT_51413}:51413/udp
+    - ${RTORRENTVPN_PORT_6881}:6881
+    - ${RTORRENTVPN_PORT_6881}:6881/udp
+    - ${RTORRENTVPN_PORT_8118}:8118
+    - ${RTORRENTVPN_PORT_9080}:9080
+    - ${RTORRENTVPN_PORT_9443}:9443
+    cap_add:
+    - NET_ADMIN
+    container_name: rtorrentvpn
+    environment:
+    - ENABLE_AUTODL_IRSSI=${RTORRENTVPN_ENABLE_AUTODL_IRSSI}
+    - ENABLE_FLOOD=${RTORRENTVPN_ENABLE_FLOOD}
+    - ENABLE_PRIVOXY=${RTORRENTVPN_ENABLE_PRIVOXY}
+    - ENABLE_RPC2_AUTH=${RTORRENTVPN_ENABLE_RPC2_AUTH}
+    - ENABLE_RPC2=${RTORRENTVPN_ENABLE_RPC2}
+    - ENABLE_WEBUI_AUTH=${RTORRENTVPN_ENABLE_WEBUI_AUTH}
+    - LAN_NETWORK=${LAN_NETWORK}
+    - NAME_SERVERS=${NS1},${NS2}
+    - PGID=${PGID}
+    - PHP_TZ=${TZ}
+    - PUID=${PUID}
+    - RPC2_PASS=${RTORRENTVPN_RPC2_PASS}
+    - RPC2_USER=${RTORRENTVPN_RPC2_USER}
+    - TZ=${TZ}
+    - VPN_ENABLED=${VPN_ENABLE}
+    - VPN_OPTIONS=${VPN_OPTIONS}
+    - VPN_PASS=${VPN_PASS}
+    - VPN_PROV=${VPN_PROV}
+    - VPN_USER=${VPN_USER}
+    - WEBUI_PASS=${RTORRENTVPN_WEBUI_PASS}
+    - WEBUI_USER=${RTORRENTVPN_WEBUI_USER}
+    logging:
+      driver: json-file
+      options:
+        max-file: ${DOCKERLOGGING_MAXFILE}
+        max-size: ${DOCKERLOGGING_MAXSIZE}
+    restart: unless-stopped
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - ${DOCKERCONFDIR}/rtorrentvpn:/config
+    - ${DOCKERSHAREDDIR}:/shared
+    - ${DOWNLOADSDIR}:/data
+    - ${DOWNLOADSDIR}:/downloads
+    - ${VPN_OVPNDIR}:/config/openvpn
   samba:
     image: dperson/samba
     hostname: ${DOCKERHOSTNAME}
@@ -396,3 +520,33 @@ services:
     - ${DOWNLOADSDIR}:/data
     - ${DOWNLOADSDIR}:/downloads
     - ${MEDIADIR_TV}:/tv
+  telegraf:
+    image: telegraf
+    hostname: ${DOCKERHOSTNAME}
+    ports:
+    - ${TELEGRAF_PORT_8092}:8092/udp
+    - ${TELEGRAF_PORT_8094}:8094
+    - ${TELEGRAF_PORT_8125}:8125
+    container_name: telegraf
+    environment:
+    - HOST_ETC=/host/etc
+    - HOST_MOUNT_PREFIX=/host
+    - HOST_PROC=/host/proc
+    - HOST_SYS=/host/sys
+    - TZ=${TZ}
+    logging:
+      driver: json-file
+      options:
+        max-file: ${DOCKERLOGGING_MAXFILE}
+        max-size: ${DOCKERLOGGING_MAXSIZE}
+    restart: unless-stopped
+    volumes:
+    - /:/host:ro
+    - /etc:/host/etc:ro
+    - /etc/localtime:/etc/localtime:ro
+    - /proc:/host/proc:ro
+    - /sys:/host/sys:ro
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    - /var/run/utmp:/var/run/utmp:ro
+    - ${DOCKERCONFDIR}/telegraf:/var/lib/telegraf
+    - ${DOCKERSHAREDDIR}:/shared

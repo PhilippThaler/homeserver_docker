@@ -5,36 +5,19 @@ services:
 #  minecraft:
 #    container_name: minecraft
 #    image: itzg/minecraft-server
-#    ports:
+#    ports: 
 #      - "25565:25565"
-#    volumes:
-#      - "${DOCKERCONFDIR}/minecraft/data:/data"
+#      - "25575:25575"
 #    environment:
 #      EULA: "TRUE"
-#      ENABLE_RCON: "true"
-#      RCON_PASSWORD: "testing"
-#      RCON_PORT: 28016
-#      DIFFICULTY: "normal"
+#      GAMEMODE: survival
+#      DIFFICULTY: normal
+#      MEMORY: "4G"
+#      VIEW_DISTANCE: 40
 #      SNOOPER_ENABLED: "false"
-#      GENERATE_STRUCTURES: "true"
-#      ALLOW_NETHER: "true"
-#      # enable env variable replacement
-#      REPLACE_ENV_VARIABLES: "TRUE"
-#      # define an optional prefix for your env variables you want to replace
-#      ENV_VARIABLE_PREFIX: "CFG_"
-#      # and here are the actual variables
-#      CFG_DB_HOST: "mariadb:3306"
-#      CFG_DB_NAME: "minecraft"
-#      CFG_DB_PASSWORD: ${CFG_DB_PASSWORD}
-#    restart: always
-#  rcon:
-#    container_name: rcon
-#    image: itzg/rcon
-#    ports:
-#      - "4326:4326"
-#      - "4327:4327"
+#      OPS: "darkhenne"
 #    volumes:
-#      - "${DOCKERCONFDIR}/minecraft/rcon:/opt/rcon-web-admin/db"
+#      - "${DOCKERSHAREDDIR}/minecraft:/data"
   postgres:
     container_name: postgres
     image: postgres
@@ -62,6 +45,7 @@ services:
       - /dev/ttyACM0:/dev/ttyACM0
     environment:
       - DECONZ_WEB_PORT=801
+      - DECONZ_WS_PORT=8443
       - DECONZ_VNC_PORT=5930
       - DECONZ_VNC_PASSWORD=${DECONZ_VNC_PASSWORD}
       - DECONZ_VNC_MODE=1
@@ -78,6 +62,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
     ports: 
       - 6052:6052
+      - 4443:443
     environment:
       - PGID=${PGID}
       - PUID=${PUID}
@@ -108,6 +93,28 @@ services:
     ports:
       - 6379:6379
     restart: always
+  cloudflareddns:
+    environment:
+      CF_APITOKEN: FzDmRg0NgvNlyorTZYaKqkf9K1IoK04DeXmMeMcj
+  influxdb:
+    environment:
+      - INFLUXDB_ADMIN_USER_PASSWORD=${INFLUXDB_PASSWORD}
+      - INFLUXDB_USER=philipp
+      - INFLUXDB_USER_PASSWORD=${INFLUXDB_PASSWORD}
+      - INFLUXDB_DB=homeassistant
+  telegraf:
+    volumes:
+    - ${DOCKERCONFDIR}/telegraf:/etc/telegraf
+    depends_on:
+      - "influxdb"
+  pihole:
+    image: mattbodholdt/docker-pi-hole
+  rtorrentvpn:
+    ports:
+      - 18650:18650
+      - 18650:18650/udp
+    environment:
+      - DEBUG=true
   homeassistant:
     depends_on:
       - "mariadb"

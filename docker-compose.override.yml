@@ -2,43 +2,43 @@ version: '3.4'
 # Other docker-compose examples in /examples
 
 services:
-#  minecraft:
-#    container_name: minecraft
-#    image: itzg/minecraft-server
-#    ports: 
-#      - "25565:25565"
-#      - "25575:25575"
-#    environment:
-#      EULA: "TRUE"
-#      GAMEMODE: survival
-#      DIFFICULTY: normal
-#      MEMORY: "4G"
-#      VIEW_DISTANCE: 40
-#      SNOOPER_ENABLED: "false"
-#      OPS: "darkhenne"
-#    volumes:
-#      - "${DOCKERSHAREDDIR}/minecraft:/data"
+  swag:
+    environment:
+      - CERTPROVIDER=${SWAG_CERTPROVIDER}
   postgres:
     container_name: postgres
     image: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /data/postgres
+    volumes:
+       - ${DOCKERCONFDIR}/postgres:/data/postgres
     ports:
       - "5432:5432"
-    restart: always
+    restart: unless-stopped
+  esphome:
+    image: esphome/esphome
+    container_name: esphome
+    network_mode: host
+    volumes: 
+      - ${DOCKERCONFDIR}/esphome:/config:rw
+      - /etc/localtime:/etc/localtime:ro
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - PGID=${PGID}
       - PUID=${PUID}
-    volumes:
-      - "${DOCKERCONFDIR}/postgres:/var/lib/postgresql/data"
+    restart: always
   deconz:
     image: marthoc/deconz
     container_name: deconz
-    network_mode: host
     restart: always
     environment:
       - PGID=${PGID}
       - PUID=${PUID}
+    ports:
+      - ${DECONZ_PORT_801}:801
+      - ${DECONZ_PORT_8443}:8443
+      - ${DECONZ_PORT_5930}:5930
     volumes:
       - ${DOCKERCONFDIR}/deCONZ:/root/.local/share/dresden-elektronik/deCONZ
     devices:
@@ -53,32 +53,18 @@ services:
       - PGID=${PGID}
       - PUID=${PUID}
       - TZ=Europe/Vienna
-  esphome:
-    image: esphome/esphome
-    container_name: esphome
-    network_mode: host
-    volumes: 
-      - ${DOCKERCONFDIR}/esphome:/config:rw
-      - /etc/localtime:/etc/localtime:ro
-    ports: 
-      - 6052:6052
-      - 4443:443
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
     environment:
-      - PGID=${PGID}
-      - PUID=${PUID}
-    restart: always
-  node-red:
-    image: nodered/node-red
-    container_name: nodered
-    network_mode: host
-    environment:
-      - PGID=${PGID}
-      - PUID=${PUID}
-    ports:
-      - 1880:1880
-    volumes: 
-      - /etc/localtime:/etc/localtime:ro
-      - ${DOCKERCONFDIR}/nodered:/data
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
   redis:
     image: bitnami/redis
     container_name: redis
@@ -93,32 +79,31 @@ services:
     ports:
       - 6379:6379
     restart: always
-  cloudflareddns:
-    environment:
-      CF_APITOKEN: FzDmRg0NgvNlyorTZYaKqkf9K1IoK04DeXmMeMcj
+    # onlyfans:
+    #   image: DIGITALCRIMINAL/OnlyFans
+    #   volumes: 
+    #     - ${DOCKERCONFDIR}/onlyfans/.settings/usr/src/app.settings
+    #     - ${DOCKERCONFDIR}/onlyfans/.profiles/usr/src/app.profiles
+    #     - ${DOCKERCONFDIR}/onlyfans/.sites/usr/src/app.sites
+
   influxdb:
-    environment:
-      - INFLUXDB_ADMIN_USER_PASSWORD=${INFLUXDB_PASSWORD}
-      - INFLUXDB_USER=philipp
-      - INFLUXDB_USER_PASSWORD=${INFLUXDB_PASSWORD}
-      - INFLUXDB_DB=homeassistant
-  telegraf:
-    volumes:
-    - ${DOCKERCONFDIR}/telegraf:/etc/telegraf
-    depends_on:
-      - "influxdb"
-  pihole:
-    image: mattbodholdt/docker-pi-hole
-  rtorrentvpn:
-    ports:
-      - 18650:18650
-      - 18650:18650/udp
-    environment:
-      - DEBUG=true
+    image: influxdb
   homeassistant:
-    depends_on:
-      - "mariadb"
+    volumes:
+      - ${DOCKERCONFDIR}/homeassistant/.ssh:/root/.ssh
+  mosquitto:
+    user: ${PGID}:${PUID}
   nextcloud:
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
     depends_on:
       - "mariadb"
       - "redis"

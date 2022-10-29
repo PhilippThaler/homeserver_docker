@@ -94,24 +94,6 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ${DOCKERCONFDIR}/homeassistant:/config
       - ${DOCKERSTORAGEDIR}:/storage
-  influxdb:
-    hostname: ${DOCKERHOSTNAME}
-    ports:
-      - ${INFLUXDB_PORT_8086}:8086
-    image: influxdb:1.8
-    container_name: influxdb
-    environment:
-      - TZ=${TZ}
-    logging:
-      driver: json-file
-      options:
-        max-file: ${DOCKERLOGGING_MAXFILE}
-        max-size: ${DOCKERLOGGING_MAXSIZE}
-    restart: ${INFLUXDB_RESTART}
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - ${DOCKERCONFDIR}/influxdb:/var/lib/influxdb
-      - ${DOCKERSTORAGEDIR}:/storage
   jackett:
     hostname: ${DOCKERHOSTNAME}
     ports:
@@ -154,27 +136,6 @@ services:
       - ${DOCKERCONFDIR}/jellyfin:/config
       - ${DOCKERSTORAGEDIR}:/storage
       - ${JELLYFIN_TRANSCODEDIR}:/transcode
-  mariadb:
-    hostname: ${DOCKERHOSTNAME}
-    ports:
-      - ${MARIADB_PORT_3306}:3306
-    image: lscr.io/linuxserver/mariadb
-    container_name: mariadb
-    environment:
-      - MYSQL_ROOT_PASSWORD=${MARIADB_MYSQL_ROOT_PASSWORD}
-      - PGID=${PGID}
-      - PUID=${PUID}
-      - TZ=${TZ}
-    logging:
-      driver: json-file
-      options:
-        max-file: ${DOCKERLOGGING_MAXFILE}
-        max-size: ${DOCKERLOGGING_MAXSIZE}
-    restart: ${MARIADB_RESTART}
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - ${DOCKERCONFDIR}/mariadb:/config
-      - ${DOCKERSTORAGEDIR}:/storage
   monitorr:
     hostname: ${DOCKERHOSTNAME}
     ports:
